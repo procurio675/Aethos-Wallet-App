@@ -1,0 +1,99 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  phone         String?  @unique
+  name          String
+  passwordHash  String
+  walletBalance Int      @default(0) // stored in paise
+
+  bankAccounts         BankAccount[]
+  sentTransactions     Transaction[] @relation("SentTransactions")
+  receivedTransactions Transaction[] @relation("ReceivedTransactions")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model BankAccount {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  bankName  String
+  accountNo String   @unique
+  last4     String
+  ifsc      String?
+  isPrimary Boolean  @default(false)
+
+  transactions Transaction[]
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Transaction {
+  id     String            @id @default(cuid())
+  token  String?           @unique
+  type   TransactionType
+  status TransactionStatus @default(PENDING)
+  amount Int               // stored in paise
+
+  senderId   String?
+  receiverId String?
+  sender     User?   @relation("SentTransactions", fields: [senderId], references: [id])
+  receiver   User?   @relation("ReceivedTransactions", fields: [receiverId], references: [id])
+
+  bankAccountId String?
+  bankAccount   BankAccount? @relation(fields: [bankAccountId], references: [id])
+
+  failureReason String?
+  attemptCount  Int       @default(0)
+  lastAttemptAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([senderId, createdAt])
+  @@index([receiverId, createdAt])
+  @@index([status, type, createdAt])
+}
+
+model IdempotencyKey {
+  id              String   @id @default(cuid())
+  key             String   @unique
+  responsePayload Json
+  createdAt       DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+// The external bank's actual ledger — used ONLY by apps/mock-bank
+model MockBankLedger {
+  id            String @id @default(cuid())
+  accountNumber String @unique
+  pinHash       String
+  bankBalance   Int    @default(5000000) // ₹50,000 in paise
+
+  createdAt DateTime @default(now())
+}
+
+enum TransactionType {
+  DEPOSIT
+  WITHDRAWAL
+  TRANSFER
+}
+
+enum TransactionStatus {
+  PENDING
+  PROCESSING
+  SUCCESS
+  FAILED
+}

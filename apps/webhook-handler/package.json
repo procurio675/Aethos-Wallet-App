@@ -1,0 +1,23 @@
+{
+  "name": "@repo/webhook-handler",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@repo/db": "*",
+    "express": "latest",
+    "zod": "latest"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "*",
+    "@types/express": "latest",
+    "@types/node": "latest",
+    "tsx": "latest",
+    "typescript": "latest"
+  }
+}
