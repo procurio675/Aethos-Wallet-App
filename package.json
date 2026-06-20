@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "build": "turbo run build",
-    "dev": "turbo run dev",
+    "dev": "concurrently -n user-app,mock-bank,webhook,sweeper -c blue,green,yellow,magenta \"npm run dev --workspace=apps/user-app\" \"npm run dev --workspace=apps/mock-bank\" \"npm run dev --workspace=apps/webhook-handler\" \"npm run dev --workspace=apps/sweeper\"",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types",
@@ -13,6 +13,7 @@
     "db:studio": "npm run --workspace=packages/db db:studio"
   },
   "devDependencies": {
+    "concurrently": "^10.0.3",
     "prettier": "^3.7.4",
     "turbo": "^2.9.18",
     "typescript": "5.9.2"

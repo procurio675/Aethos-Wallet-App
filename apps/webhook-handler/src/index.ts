@@ -1,22 +1,48 @@
 import express from "express";
 import { prisma } from "@repo/db";
 import "dotenv/config";
+import crypto from "crypto";
 
 const app = express();
 app.use(express.json());
 
 app.post("/webhook", async (req, res) => {
-  const { token, userId, amount } = req.body;
+  const { token, status } = req.body;
+  const receivedSignature = req.headers["x-bank-signature"] as string | undefined;
 
-  if (!token || !userId || !amount) {
-    return res.status(400).json({ error: "Missing required fields: token, userId, amount" });
+  if (!token || !status) {
+    return res.status(400).json({ error: "Missing required fields: token, status" });
   }
+
+  // 1. Verify HMAC Signature
+  const secret = process.env.BANK_WEBHOOK_SECRET;
+  if (!secret) {
+    console.error("❌ BANK_WEBHOOK_SECRET is not configured");
+    return res.status(500).json({ error: "Webhook secret not configured" });
+  }
+
+  if (!receivedSignature) {
+    console.error("❌ Missing x-bank-signature header");
+    return res.status(401).json({ error: "Missing signature" });
+  }
+
+  const expectedSignature = crypto
+    .createHmac("sha256", secret)
+    .update(JSON.stringify({ token, status }))
+    .digest("hex");
+
+  if (receivedSignature !== expectedSignature) {
+    console.error(`❌ Signature mismatch for token: ${token}`);
+    return res.status(401).json({ error: "Invalid signature — request rejected" });
+  }
+
+  console.log(`🔐 Signature verified for token: ${token}`);
 
   try {
     await prisma.$transaction(async (tx) => {
-      // 1. Pessimistic Row Lock (FOR UPDATE)
-      // Locks the specific transaction row to prevent concurrent webhook calls
-      // from processing the same deposit twice.
+      // Step 3: LOCK 2 (The Transaction Lock)
+      // Opens atomic DB transaction and applies Pessimistic Row Lock on the Transaction row.
+      // If the bank sent two webhooks, the second is frozen here.
       const transactions = await tx.$queryRaw<any[]>`
         SELECT * FROM "Transaction"
         WHERE token = ${token}
@@ -29,10 +55,11 @@ app.post("/webhook", async (req, res) => {
 
       const transaction = transactions[0];
 
-      // 2. Idempotency Check
+      // Step 4: Idempotency Check
+      // Verify row is still PENDING. If already SUCCESS, safely terminate.
       if (transaction.status === "SUCCESS") {
-        console.log(`Webhook already processed for token: ${token}`);
-        return; // Safe idempotency return
+        console.log(`Webhook already processed for token: ${token}. Safely terminating.`);
+        return; // Safely terminates
       }
 
       if (transaction.status === "FAILED") {
@@ -43,21 +70,33 @@ app.post("/webhook", async (req, res) => {
         throw new Error("Webhook handles deposits only");
       }
 
-      // 3. Update wallet balance safely
-      // The CHECK ("walletBalance" >= 0) constraint in the DB ensures we never go negative
-      // (even though this is a credit, it's good practice)
-      await tx.$executeRaw`
-        UPDATE "User"
-        SET "walletBalance" = "walletBalance" + ${amount}
-        WHERE id = ${userId}
-      `;
+      // Extract details from locked DB row securely
+      const userId = transaction.receiverId;
+      const amount = Number(transaction.amount);
 
-      // 4. Update transaction status
-      await tx.$executeRaw`
-        UPDATE "Transaction"
-        SET status = 'SUCCESS', "updatedAt" = NOW()
-        WHERE id = ${transaction.id}
-      `;
+      // Step 5: State Update
+      // Changes the transaction status to SUCCESS
+      await tx.transaction.update({
+        where: { id: transaction.id },
+        data: {
+          status: 'SUCCESS'
+        }
+      });
+
+      // Step 6: LOCK 3 (The Wallet Increment)
+      // Applies a lock to the User row via Prisma's native atomic increment and adds the money
+      await tx.user.update({
+        where: { id: userId },
+        data: {
+          walletBalance: {
+            increment: amount
+          }
+        }
+      });
+      
+      // Step 7: Commit
+      // The Prisma $transaction block ends here, naturally committing the database transaction
+      // and releasing all locks (Transaction lock and User lock).
     });
 
     console.log(`✅ Successfully processed webhook for deposit token: ${token}`);

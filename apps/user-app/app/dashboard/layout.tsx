@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/auth";
 import DashboardNavbar from "@/components/dashboard/navbar";
+import Sidebar from "@/components/dashboard/sidebar";
 
 export default async function DashboardLayout({
   children,
@@ -15,11 +16,15 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-[#080810] flex flex-col">
+    <div className="min-h-screen bg-[#080810] flex flex-col relative">
       <DashboardNavbar userName={session.user.name || "User"} />
-      <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 py-8">
-        {children}
-      </main>
+      
+      <div className="flex flex-1">
+        <Sidebar />
+        <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 py-8 md:ml-64">
+          {children}
+        </main>
+      </div>
     </div>
   );
 }

@@ -1,7 +1,11 @@
-import { ArrowUpRight, ArrowDownLeft } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+"use client";
+
+import { useState } from "react";
+import { ArrowUpRight, ArrowDownLeft, Loader2 } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { getTransactionsPaginated } from "@/app/actions/transactions";
 import { formatDistanceToNow } from "date-fns";
 
 type TransactionProp = {
@@ -17,14 +21,38 @@ type TransactionProp = {
   bankAccount: { bankName: string; last4: string } | null;
 };
 
-export default function RecentTransactions({ transactions, userId }: { transactions: TransactionProp[], userId: string }) {
-  if (!transactions || transactions.length === 0) {
+export default function TransactionsList({ 
+  initialTransactions, 
+  initialNextCursor,
+  userId 
+}: { 
+  initialTransactions: TransactionProp[];
+  initialNextCursor: string | null;
+  userId: string;
+}) {
+  const [transactions, setTransactions] = useState<TransactionProp[]>(initialTransactions);
+  const [nextCursor, setNextCursor] = useState<string | null>(initialNextCursor);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const loadMore = async () => {
+    if (!nextCursor || isLoading) return;
+    
+    setIsLoading(true);
+    try {
+      const result = await getTransactionsPaginated(nextCursor, 15);
+      setTransactions((prev) => [...prev, ...result.transactions]);
+      setNextCursor(result.nextCursor);
+    } catch (error) {
+      console.error("Failed to fetch transactions:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (transactions.length === 0) {
     return (
-      <Card className="bg-[#0a0a16]/80 border-white/5 backdrop-blur-xl col-span-1 md:col-span-2">
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold text-white">Recent Transactions</CardTitle>
-        </CardHeader>
-        <CardContent className="px-6 pb-6 text-center text-white/50">
+      <Card className="bg-[#0a0a16]/80 border-white/5 backdrop-blur-xl">
+        <CardContent className="p-12 text-center text-white/50">
           No transactions found.
         </CardContent>
       </Card>
@@ -32,11 +60,11 @@ export default function RecentTransactions({ transactions, userId }: { transacti
   }
 
   return (
-    <Card className="bg-[#0a0a16]/80 border-white/5 backdrop-blur-xl col-span-1 md:col-span-2">
-      <CardHeader>
-        <CardTitle className="text-lg font-semibold text-white">Recent Transactions</CardTitle>
-      </CardHeader>
-      <CardContent className="px-0">
+    <Card className="bg-[#0a0a16]/80 border-white/5 backdrop-blur-xl relative overflow-hidden">
+      {/* Vengeance UI Glow */}
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-violet-500/5 blur-[100px] rounded-full pointer-events-none" />
+      
+      <CardContent className="p-0 relative z-10">
         <div className="flex flex-col">
           {transactions.map((tx, i) => {
             const isReceived = tx.receiverId === userId || tx.type === "DEPOSIT";
@@ -105,11 +133,26 @@ export default function RecentTransactions({ transactions, userId }: { transacti
             );
           })}
         </div>
-        <div className="px-6 pt-4 mt-2 border-t border-white/5 text-center">
-          <Link href="/dashboard/transactions" className="text-sm font-medium text-violet-400 hover:text-violet-300 transition-colors inline-block">
-            View all transactions →
-          </Link>
-        </div>
+        
+        {nextCursor && (
+          <div className="px-6 py-6 border-t border-white/5 flex justify-center">
+            <Button 
+              variant="outline" 
+              className="bg-white/5 border-white/10 text-white hover:bg-white/10 min-w-[140px]"
+              onClick={loadMore}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Loading...
+                </>
+              ) : (
+                "Show More"
+              )}
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
