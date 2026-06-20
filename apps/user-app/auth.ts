@@ -1,24 +1,41 @@
-import NextAuth from "next-auth";
-import Credentials from "next-auth/providers/credentials";
+import NextAuth, { type NextAuthOptions, type DefaultSession } from "next-auth";
+import CredentialsProvider from "next-auth/providers/credentials";
 import { z } from "zod";
+import { prisma } from "@repo/db";
+import bcrypt from "bcryptjs";
 
-export const { handlers, signIn, signOut, auth } = NextAuth({
+declare module "next-auth" {
+  interface Session {
+    user: {
+      id: string;
+    } & DefaultSession["user"];
+  }
+}
+
+export const authOptions: NextAuthOptions = {
   providers: [
-    Credentials({
+    CredentialsProvider({
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        // TODO: Implement real user lookup with prisma + password hash verification
         const parsed = z
           .object({ email: z.string().email(), password: z.string().min(6) })
           .safeParse(credentials);
 
         if (!parsed.success) return null;
 
-        // Placeholder — replace with real DB lookup
-        return { id: "1", email: parsed.data.email, name: "Demo User" };
+        const user = await prisma.user.findUnique({
+          where: { email: parsed.data.email },
+        });
+
+        if (!user) return null;
+
+        const isPasswordValid = await bcrypt.compare(parsed.data.password, user.passwordHash);
+        if (!isPasswordValid) return null;
+        
+        return { id: user.id, email: user.email, name: user.name };
       },
     }),
   ],
@@ -34,10 +51,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return token;
     },
     session({ session, token }) {
-      if (token.id) {
+      if (token.id && session.user) {
         session.user.id = token.id as string;
       }
       return session;
     },
   },
-});
+};

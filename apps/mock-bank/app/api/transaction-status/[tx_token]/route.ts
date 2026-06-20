@@ -1,21 +1,21 @@
-/**
- * GET /api/transaction-status/:tx_token
- * Returns the status of a transaction by its token.
- * Used by the sweeper for deposit reconciliation.
- */
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: Promise<{ tx_token: string }> }
-) {
+export async function GET(req: Request, { params }: { params: Promise<{ tx_token: string }> }) {
   const { tx_token } = await params;
+  
+  // In a real system, the mock bank would look up the bank reference token in its own DB.
+  // For our simulation, we randomly return SUCCESS 80% of the time, simulating a completed transaction.
+  const rand = Math.random();
+  let status = "SUCCESS";
+  
+  if (rand > 0.9) {
+    status = "FAILED";
+  } else if (rand > 0.8) {
+    status = "PENDING";
+  }
 
-  // TODO: Look up token in the mock bank's idempotency/transaction log (via @repo/db)
-  // For now, return a stub response.
   return NextResponse.json({
     token: tx_token,
-    status: "PENDING",
-    message: "Transaction status endpoint — implement with DB lookup",
+    status,
   });
 }

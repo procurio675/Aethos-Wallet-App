@@ -1,8 +1,17 @@
+import Navbar from "@/components/navbar";
+import HeroSection from "@/components/hero-section";
+import FeaturesSection from "@/components/features-section";
+import CtaSection from "@/components/cta-section";
+import Footer from "@/components/footer";
+
 export default function HomePage() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center">
-      <h1 className="text-4xl font-bold">Wallet App</h1>
-      <p className="mt-2 text-muted-foreground">User app is up and running.</p>
+    <main className="relative min-h-screen bg-[#080810]">
+      <Navbar />
+      <HeroSection />
+      <FeaturesSection />
+      <CtaSection />
+      <Footer />
     </main>
   );
 }

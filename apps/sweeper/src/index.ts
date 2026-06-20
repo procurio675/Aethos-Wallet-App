@@ -1,67 +1,163 @@
-import axios from "axios";
+import { prisma } from "@repo/db";
+import "dotenv/config";
 
-const MOCK_BANK_URL = process.env.MOCK_BANK_URL ?? "http://localhost:3001";
-const POLL_INTERVAL_MS = 5_000; // 5 seconds between each sweep
+const POLL_INTERVAL = parseInt(process.env.POLL_INTERVAL_MS || "5000", 10);
+const MOCK_BANK_URL = process.env.MOCK_BANK_URL || "http://localhost:3001";
 
-/**
- * SWEEPER — The Asynchronous Safety Net
- *
- * Dual responsibility:
- *
- * 1. WITHDRAWAL QUEUE (Workflow 3)
- *    - Locks PENDING withdrawal rows using SKIP LOCKED (multi-instance safe)
- *    - Sends funds to the mock bank with an Idempotency-Key header
- *    - On timeout/network error → keeps row as PENDING (safe retry on next tick)
- *    - On explicit bank error (e.g. 422) → marks FAILED, refunds the wallet balance
- *    - On success → marks SUCCESS
- *
- * 2. DEPOSIT RECONCILIATION (Workflow 2)
- *    - Finds stale PENDING on-ramp transactions (older than X minutes)
- *    - Queries mock-bank's /api/transaction-status/:token endpoint
- *    - If bank confirms SUCCESS → applies row lock, credits wallet, marks SUCCESS
- *    - Guards against late-arriving webhook race with the same lock
- */
-
-async function processWithdrawalQueue(): Promise<void> {
-  // TODO: Implement with @repo/db
-  // Steps:
-  //   1. prisma.$transaction with SELECT ... FOR UPDATE SKIP LOCKED on pending withdrawals
-  //   2. For each locked row:
-  //      a. POST to bank with axios, header: { 'Idempotency-Key': row.id }
-  //      b. On AxiosError (timeout/network) → catch, log, leave PENDING
-  //      c. On HTTP 4xx (explicit error) → mark FAILED, refund walletBalance
-  //      d. On HTTP 2xx → mark SUCCESS
-  console.log("[sweeper] Withdrawal queue sweep — TODO: implement with DB");
-}
-
-async function reconcileOrphanedDeposits(): Promise<void> {
-  // TODO: Implement with @repo/db
-  // Steps:
-  //   1. Query stale PENDING on-ramp transactions (e.g. older than 2 minutes)
-  //   2. For each:
-  //      a. GET mock-bank /api/transaction-status/:tx_token
-  //      b. If SUCCESS → open prisma.$transaction, SELECT FOR UPDATE on row,
-  //         verify still PENDING, credit wallet, mark SUCCESS
-  //      c. If FAILURE → mark FAILED (no refund needed — user's bank was never debited from wallet)
-  //      d. If still PENDING on bank side → leave, retry next cycle
-  console.log("[sweeper] Deposit reconciliation sweep — TODO: implement with DB");
-}
-
-async function sweep(): Promise<void> {
-  console.log(`[sweeper] Sweep started at ${new Date().toISOString()}`);
+async function processWithdrawalQueue() {
   try {
-    await Promise.allSettled([
-      processWithdrawalQueue(),
-      reconcileOrphanedDeposits(),
-    ]);
-  } catch (error) {
-    // Top-level catch — sweeper must NEVER crash; log and continue
-    console.error("[sweeper] Unexpected error in sweep cycle:", error);
+    await prisma.$transaction(async (tx) => {
+      // 1. Safe re-claiming of zombie rows
+      // Locks exactly one row using FOR UPDATE SKIP LOCKED
+      const rows = await tx.$queryRaw<any[]>`
+        SELECT * FROM "Transaction"
+        WHERE type = 'WITHDRAWAL' 
+        AND (
+          status = 'PENDING' 
+          OR (status = 'PROCESSING' AND "lastAttemptAt" < NOW() - INTERVAL '2 minutes')
+        )
+        ORDER BY "createdAt" ASC
+        LIMIT 1
+        FOR UPDATE SKIP LOCKED
+      `;
+
+      if (rows.length === 0) return;
+      const transaction = rows[0];
+
+      console.log(`[Sweeper] Found withdrawal: ${transaction.id} (Status: ${transaction.status})`);
+
+      // 2. Mark as PROCESSING immediately
+      await tx.$executeRaw`
+        UPDATE "Transaction"
+        SET status = 'PROCESSING', "lastAttemptAt" = NOW(), "attemptCount" = "attemptCount" + 1
+        WHERE id = ${transaction.id}
+      `;
+
+      // 3. Make outbound API call to Mock Bank
+      let bankSuccess = false;
+      try {
+        const response = await fetch(`${MOCK_BANK_URL}/api/bank/withdraw`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            amount: transaction.amount,
+            // Normally we'd look up the BankAccount details here
+            accountNumber: transaction.bankAccountId || "dummy", 
+          }),
+        });
+        bankSuccess = response.ok;
+      } catch (e) {
+        console.error(`[Sweeper] External bank call failed for ${transaction.id}`, e);
+        // Timeout/Network error. Leave status as PROCESSING. 
+        // The zombie check query will pick it up again in 2 minutes!
+        return; 
+      }
+
+      // 4. Handle definite terminal response
+      if (bankSuccess) {
+        await tx.$executeRaw`
+          UPDATE "Transaction"
+          SET status = 'SUCCESS', "updatedAt" = NOW()
+          WHERE id = ${transaction.id}
+        `;
+        console.log(`[Sweeper] Withdrawal ${transaction.id} succeeded.`);
+      } else {
+        // Explicit bank rejection -> Fail transaction & refund user
+        await tx.$executeRaw`
+          UPDATE "Transaction"
+          SET status = 'FAILED', "failureReason" = 'Bank rejected withdrawal', "updatedAt" = NOW()
+          WHERE id = ${transaction.id}
+        `;
+        
+        await tx.$executeRaw`
+          UPDATE "User"
+          SET "walletBalance" = "walletBalance" + ${transaction.amount}
+          WHERE id = ${transaction.senderId}
+        `;
+        console.log(`[Sweeper] Withdrawal ${transaction.id} failed. Refunded user.`);
+      }
+    });
+  } catch (error: any) {
+    console.error("[Sweeper] Error processing withdrawal:", error.message);
   }
 }
 
-console.log(`[sweeper] Starting. Poll interval: ${POLL_INTERVAL_MS}ms. Bank URL: ${MOCK_BANK_URL}`);
+async function reconcileOrphanedDeposits() {
+  try {
+    // Finds deposits stuck in PENDING or PROCESSING (if the webhook was never called)
+    await prisma.$transaction(async (tx) => {
+      const rows = await tx.$queryRaw<any[]>`
+        SELECT * FROM "Transaction"
+        WHERE type = 'DEPOSIT' 
+        AND (
+          status = 'PENDING' 
+          OR (status = 'PROCESSING' AND "lastAttemptAt" < NOW() - INTERVAL '2 minutes')
+        )
+        ORDER BY "createdAt" ASC
+        LIMIT 1
+        FOR UPDATE SKIP LOCKED
+      `;
 
-// Run immediately on startup, then on every interval
-sweep();
-setInterval(sweep, POLL_INTERVAL_MS);
+      if (rows.length === 0) return;
+      const transaction = rows[0];
+      
+      if (!transaction.token) return; // Cannot reconcile without a bank token
+
+      console.log(`[Sweeper] Reconciling deposit: ${transaction.id} (Token: ${transaction.token})`);
+
+      // Mark processing to avoid other workers picking it up
+      await tx.$executeRaw`
+        UPDATE "Transaction"
+        SET status = 'PROCESSING', "lastAttemptAt" = NOW(), "attemptCount" = "attemptCount" + 1
+        WHERE id = ${transaction.id}
+      `;
+
+      // Check status from mock bank
+      try {
+        const response = await fetch(`${MOCK_BANK_URL}/api/transaction-status/${transaction.token}`);
+        if (!response.ok) return; // Network error, try again later
+        
+        const data = await response.json();
+        
+        if (data.status === 'SUCCESS') {
+          // Bank processed it, but webhook was lost. Credit the user!
+          await tx.$executeRaw`
+            UPDATE "User"
+            SET "walletBalance" = "walletBalance" + ${transaction.amount}
+            WHERE id = ${transaction.receiverId}
+          `;
+          await tx.$executeRaw`
+            UPDATE "Transaction"
+            SET status = 'SUCCESS', "updatedAt" = NOW()
+            WHERE id = ${transaction.id}
+          `;
+          console.log(`[Sweeper] Deposit ${transaction.id} reconciled successfully.`);
+        } else if (data.status === 'FAILED') {
+          await tx.$executeRaw`
+            UPDATE "Transaction"
+            SET status = 'FAILED', "updatedAt" = NOW()
+            WHERE id = ${transaction.id}
+          `;
+          console.log(`[Sweeper] Deposit ${transaction.id} reconciliation confirmed failure.`);
+        }
+        // If bank says PENDING, do nothing, it will be checked again later.
+      } catch (e) {
+        console.error(`[Sweeper] Failed to reach bank for reconciliation ${transaction.id}`);
+      }
+    });
+  } catch (error: any) {
+    console.error("[Sweeper] Error reconciling deposit:", error.message);
+  }
+}
+
+function startSweeper() {
+  console.log(`🚀 Sweeper started, polling every ${POLL_INTERVAL}ms`);
+  
+  // Continuous polling loop
+  setInterval(async () => {
+    await processWithdrawalQueue();
+    await reconcileOrphanedDeposits();
+  }, POLL_INTERVAL);
+}
+
+startSweeper();
