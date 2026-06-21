@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/auth";
 import DashboardNavbar from "@/components/dashboard/navbar";
 import Sidebar from "@/components/dashboard/sidebar";
+import AutoRefresh from "@/components/dashboard/auto-refresh";
 
 export default async function DashboardLayout({
   children,
@@ -17,6 +18,7 @@ export default async function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-[#080810] flex flex-col relative">
+      <AutoRefresh intervalMs={20000} />
       <DashboardNavbar userName={session.user.name || "User"} />
       
       <div className="flex flex-1">

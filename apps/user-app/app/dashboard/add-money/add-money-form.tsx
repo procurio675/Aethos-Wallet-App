@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Building2, Plus, Loader2 } from "lucide-react";
+import { Building2, Plus, Loader2, Star } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +19,8 @@ const presetAmounts = [500, 1000, 5000, 10000];
 
 export default function AddMoneyForm({ accounts }: { accounts: BankAccountProps[] }) {
   const [amount, setAmount] = useState("");
-  const [selectedBank, setSelectedBank] = useState(accounts[0]?.id || "");
+  const primaryAccount = accounts.find((acc) => acc.isPrimary);
+  const [selectedBank, setSelectedBank] = useState(primaryAccount?.id || accounts[0]?.id || "");
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -104,9 +105,17 @@ export default function AddMoneyForm({ accounts }: { accounts: BankAccountProps[
                       <Building2 className={`w-5 h-5 ${selectedBank === acc.id ? "text-emerald-400" : "text-white/50"}`} />
                     </div>
                     <div>
-                      <p className={`text-sm font-medium ${selectedBank === acc.id ? "text-emerald-400" : "text-white"}`}>
-                        {acc.bankName}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <p className={`text-sm font-medium ${selectedBank === acc.id ? "text-emerald-400" : "text-white"}`}>
+                          {acc.bankName}
+                        </p>
+                        {acc.isPrimary && (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                            <Star className="w-2.5 h-2.5" />
+                            Primary
+                          </span>
+                        )}
+                      </div>
                       <p className="text-xs text-white/40">•••• {acc.last4}</p>
                     </div>
                   </div>

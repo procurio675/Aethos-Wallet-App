@@ -87,7 +87,7 @@ export default function RecentTransactions({ transactions, userId }: { transacti
                               : "bg-destructive/10 text-destructive"
                           }`}
                         >
-                          {tx.status}
+                          {tx.status === "PENDING" || tx.status === "PROCESSING" ? "Processing..." : tx.status}
                         </span>
                       </div>
                     </div>
