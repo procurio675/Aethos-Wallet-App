@@ -49,30 +49,26 @@ export async function getTransactionsPaginated(cursor: string | null = null, lim
 
   const userId = session.user.id;
 
-  const queryArgs: any = {
-    where: {
-      OR: [
-        { senderId: userId },
-        { receiverId: userId }
-      ]
-    },
-    orderBy: {
-      createdAt: 'desc'
-    },
-    take: limit + 1, // Fetch one extra to determine if there's a next page
-    include: {
-      sender: { select: { name: true } },
-      receiver: { select: { name: true } },
-      bankAccount: { select: { bankName: true, last4: true } }
-    }
+  const where = {
+    OR: [
+      { senderId: userId },
+      { receiverId: userId },
+    ],
   };
 
-  if (cursor) {
-    queryArgs.cursor = { id: cursor };
-    queryArgs.skip = 1; // skip the cursor itself
-  }
+  const include = {
+    sender: { select: { name: true } },
+    receiver: { select: { name: true } },
+    bankAccount: { select: { bankName: true, last4: true } },
+  } as const;
 
-  const transactions = await prisma.transaction.findMany(queryArgs);
+  const transactions = await prisma.transaction.findMany({
+    where,
+    orderBy: { createdAt: "desc" },
+    take: limit + 1,
+    include,
+    ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+  });
   
   let nextCursor: string | null = null;
   if (transactions.length > limit) {

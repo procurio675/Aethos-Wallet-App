@@ -17,7 +17,7 @@ export async function signUp(formData: FormData) {
     const parsed = signUpSchema.safeParse(rawData);
 
     if (!parsed.success) {
-      return { error: parsed.error.errors[0]?.message || "Invalid input" };
+      return { error: parsed.error.issues[0]?.message || "Invalid input" };
     }
 
     const { name, email, phone, password } = parsed.data;
