@@ -11,6 +11,7 @@ export default async function PayPage({ searchParams }: Props) {
   const token = typeof resolvedParams.token === "string" ? resolvedParams.token : undefined;
   const amount = typeof resolvedParams.amount === "string" ? resolvedParams.amount : undefined;
   const signature = typeof resolvedParams.signature === "string" ? resolvedParams.signature : undefined;
+  const callbackUrl = typeof resolvedParams.callbackUrl === "string" ? resolvedParams.callbackUrl : undefined;
 
   if (!token || !amount || !signature) {
     return <ErrorUI message="400 Bad Request: Missing transaction token, amount, or signature." />;
@@ -68,7 +69,7 @@ export default async function PayPage({ searchParams }: Props) {
           </p>
         </div>
 
-        <PinForm token={token} amount={amount!} signature={signature} />
+        <PinForm token={token} amount={amount!} signature={signature} callbackUrl={callbackUrl} />
       </div>
       
     </div>

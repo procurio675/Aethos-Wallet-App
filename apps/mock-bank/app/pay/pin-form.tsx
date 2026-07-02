@@ -4,7 +4,7 @@ import { useState } from "react";
 
 type Outcome = "SUCCESS" | "BANK_REJECTED" | "NETWORK_CRASH" | "INSUFFICIENT_FUNDS" | null;
 
-export default function PinForm({ token, amount, signature }: { token: string; amount: string; signature: string }) {
+export default function PinForm({ token, amount, signature, callbackUrl }: { token: string; amount: string; signature: string; callbackUrl?: string }) {
   const [pin, setPin] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -46,7 +46,7 @@ export default function PinForm({ token, amount, signature }: { token: string; a
       // Redirect to wallet-app dashboard after a delay
       const redirectDelay = data.outcome === "SUCCESS" ? 2000 : 3000;
       setTimeout(() => {
-        window.location.href = "http://localhost:3000/dashboard";
+        window.location.href = callbackUrl || "http://localhost:3000/dashboard";
       }, redirectDelay);
     } catch (err) {
       setError("Network error. Please try again.");

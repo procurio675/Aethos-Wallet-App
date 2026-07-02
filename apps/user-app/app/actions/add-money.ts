@@ -55,7 +55,9 @@ export async function initiateAddMoney(amount: number, bankAccountId: string) {
 
   // 5. Return redirect URL to Mock Bank (amount in paise)
   const mockBankUrl = process.env.MOCK_BANK_URL || "http://localhost:3001";
-  const redirectUrl = `${mockBankUrl}/pay?token=${txToken}&amount=${amountInPaise}&signature=${signature}`;
+  const userAppUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+  const callbackUrl = encodeURIComponent(`${userAppUrl}/dashboard`);
+  const redirectUrl = `${mockBankUrl}/pay?token=${txToken}&amount=${amountInPaise}&signature=${signature}&callbackUrl=${callbackUrl}`;
 
   return { success: true, redirectUrl };
 }
