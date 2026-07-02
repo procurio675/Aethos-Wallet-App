@@ -53,10 +53,13 @@ export default function SignInPage() {
 
       <Card className="w-full max-w-md bg-[#0a0a16]/80 border-white/[0.05] backdrop-blur-xl z-10 animate-fade-in-slow">
         <CardHeader className="space-y-2 text-center pb-6">
-          <div className="w-12 h-12 mx-auto bg-gradient-to-br from-violet-500 to-indigo-600 rounded-xl flex items-center justify-center mb-4">
-            <svg width="24" height="24" viewBox="0 0 14 14" fill="none">
-              <path d="M2 4h10M2 7h6M2 10h8" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
+          <div className="mx-auto flex items-center justify-center mb-4">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/aethos-logo.png"
+              alt="Aethos"
+              style={{ width: 64, height: 64, objectFit: "contain" }}
+            />
           </div>
           <CardTitle className="text-2xl font-semibold tracking-tight text-white">Sign in to PayFlow</CardTitle>
           <CardDescription className="text-white/60">
