@@ -7,12 +7,12 @@ const geistSans = Geist({ subsets: ["latin"], variable: "--font-sans" });
 const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
 export const metadata: Metadata = {
-  title: "PayFlow — Send Money, Instantly",
+  title: "Aethos — Send Money, Instantly",
   description:
     "The modern digital wallet for India. Send, receive, and manage money with bank-grade security and instant settlements.",
   keywords: ["wallet", "payments", "UPI", "money transfer", "fintech", "India"],
   openGraph: {
-    title: "PayFlow — Send Money, Instantly",
+    title: "Aethos — Send Money, Instantly",
     description: "The modern digital wallet for India.",
     type: "website",
   },

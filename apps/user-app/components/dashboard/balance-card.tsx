@@ -1,4 +1,4 @@
-import { Wallet, IndianRupee } from "lucide-react";
+import { Wallet } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface BalanceCardProps {
@@ -14,23 +14,26 @@ export default function BalanceCard({ balance }: BalanceCardProps) {
   }).format(balance);
 
   return (
-    <Card className="bg-gradient-to-br from-[#0f0f1d] to-[#0a0a16] border-white/5 shadow-2xl relative overflow-hidden group">
+    <Card
+      className="shadow-2xl relative overflow-hidden group transition-colors duration-300"
+      style={{ backgroundColor: "var(--surface-raised)", borderColor: "var(--border-subtle)" }}
+    >
       {/* Glow effect */}
-      <div className="absolute -top-24 -right-24 w-48 h-48 bg-violet-600/20 blur-[60px] rounded-full group-hover:bg-violet-500/30 transition-colors duration-500 pointer-events-none" />
-      
+      <div className="absolute -top-24 -right-24 w-48 h-48 rounded-full group-hover:opacity-100 opacity-80 transition-opacity duration-500 pointer-events-none" style={{ backgroundColor: "var(--glow-violet)", filter: "blur(60px)" }} />
+
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium text-white/50 flex items-center gap-2">
+        <CardTitle className="text-sm font-medium flex items-center gap-2" style={{ color: "var(--text-secondary)" }}>
           <Wallet className="w-4 h-4 text-violet-400" />
           Primary Wallet Balance
         </CardTitle>
       </CardHeader>
-      
+
       <CardContent>
         <div className="flex items-baseline gap-1 mt-2">
-          <span className="text-5xl font-bold tracking-tight text-white animate-fade-in">
+          <span className="text-5xl font-bold tracking-tight animate-fade-in" style={{ color: "var(--text-primary)" }}>
             {formattedBalance.split('.')[0]}
           </span>
-          <span className="text-2xl font-semibold text-white/40">
+          <span className="text-2xl font-semibold" style={{ color: "var(--text-muted)" }}>
             .{formattedBalance.split('.')[1]}
           </span>
         </div>

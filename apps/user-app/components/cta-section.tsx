@@ -16,7 +16,7 @@ const steps = [
   {
     step: "03",
     title: "Send & receive",
-    desc: "Transfer to anyone on PayFlow — or withdraw back to your bank anytime.",
+    desc: "Transfer to anyone on Aethos — or withdraw back to your bank anytime.",
   },
 ];
 
@@ -69,7 +69,7 @@ export default function CtaSection() {
               </span>
             </h2>
             <p className="text-white/40 text-base mb-10 max-w-md mx-auto leading-relaxed">
-              Join thousands of users who trust PayFlow for their everyday payments.
+              Join thousands of users who trust Aethos for their everyday payments.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link href="/auth/signup">

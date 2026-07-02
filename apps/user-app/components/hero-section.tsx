@@ -73,7 +73,7 @@ export default function HeroSection() {
 
         {/* Subheading */}
         <p className="text-lg md:text-xl text-white/40 max-w-2xl mx-auto leading-relaxed mb-10 font-light animate-slide-up-delay">
-          PayFlow is a secure digital wallet built for India.
+          Aethos is a secure digital wallet built for India.
           Transfer funds instantly, track every rupee, and stay in control.
         </p>
 

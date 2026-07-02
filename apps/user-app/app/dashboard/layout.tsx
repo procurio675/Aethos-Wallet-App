@@ -24,10 +24,12 @@ export default async function DashboardLayout({
   });
 
   return (
-    <div className="min-h-screen bg-[#080810] flex flex-col relative">
+    <div className="min-h-screen flex flex-col relative transition-colors duration-300" style={{ backgroundColor: "var(--surface-base)" }}>
       <AutoRefresh intervalMs={20000} />
       <DashboardNavbar 
-        userName={session.user.name || "User"} 
+        userName={session.user.name || "User"}
+        userId={session.user.id || ""}
+        userEmail={session.user.email || ""}
         notifications={notifications}
       />
       

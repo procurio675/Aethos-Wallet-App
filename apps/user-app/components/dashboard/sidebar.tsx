@@ -17,9 +17,12 @@ export default function Sidebar() {
   ];
 
   return (
-    <aside className="w-64 fixed inset-y-0 left-0 z-40 bg-[#080810]/80 backdrop-blur-2xl border-r border-white/5 pt-20 pb-8 flex flex-col hidden md:flex">
+    <aside
+      className="w-64 fixed inset-y-0 left-0 z-40 backdrop-blur-2xl border-r pt-20 pb-8 flex-col hidden md:flex transition-colors duration-300"
+      style={{ backgroundColor: "color-mix(in srgb, var(--surface-base) 80%, transparent)", borderColor: "var(--border-subtle)" }}
+    >
       {/* Glow Effect */}
-      <div className="absolute top-1/4 -left-12 w-48 h-48 bg-violet-600/10 blur-[80px] rounded-full pointer-events-none" />
+      <div className="absolute top-1/4 -left-12 w-48 h-48 rounded-full pointer-events-none" style={{ backgroundColor: "var(--glow-violet)", filter: "blur(80px)" }} />
 
       <div className="flex-1 overflow-y-auto py-6 flex flex-col gap-2 px-4">
         {navItems.map((item) => {
@@ -28,11 +31,12 @@ export default function Sidebar() {
             <Link
               key={item.name}
               href={item.href}
-              className={`relative flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group overflow-hidden ${
-                isActive
-                  ? "text-white bg-white/5 shadow-[0_0_20px_rgba(139,92,246,0.1)] border border-white/10"
-                  : "text-white/50 hover:text-white hover:bg-white/[0.02]"
-              }`}
+              className={`relative flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group overflow-hidden`}
+              style={{
+                color: isActive ? "var(--text-primary)" : "var(--text-secondary)",
+                backgroundColor: isActive ? "var(--surface-active)" : "transparent",
+                border: isActive ? "1px solid var(--border-default)" : "1px solid transparent",
+              }}
             >
               {isActive && (
                 <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-violet-500 rounded-r-full shadow-[0_0_10px_rgba(139,92,246,0.8)]" />

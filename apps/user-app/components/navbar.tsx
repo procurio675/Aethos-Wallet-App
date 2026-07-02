@@ -22,13 +22,14 @@ export default function Navbar() {
     >
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2.5 group">
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-500/20">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M2 4h10M2 7h6M2 10h8" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
-          </div>
-          <span className="text-sm font-semibold tracking-tight text-white">PayFlow</span>
+        <Link href="/" className="flex items-center gap-3 group">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/aethos-logo.png"
+            alt="Aethos"
+            style={{ width: 56, height: 56, objectFit: "contain" }}
+          />
+          <span className="text-xl font-bold tracking-tight text-white">Aethos</span>
         </Link>
 
         {/* Nav links */}

@@ -32,14 +32,18 @@ export default function QuickActions() {
       {actions.map((action) => (
         <Link key={action.name} href={action.href}>
           <Card
-            className={`bg-white/[0.02] border-white/5 cursor-pointer transition-all duration-300 group ${action.hoverStyle} h-full`}
+            className={`cursor-pointer transition-all duration-300 group ${action.hoverStyle} h-full`}
+            style={{ backgroundColor: "var(--surface-raised)", borderColor: "var(--border-subtle)" }}
           >
             <CardContent className="p-6 flex flex-col items-center justify-center text-center h-full">
-              <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-4 transition-transform duration-300 group-hover:scale-110">
+              <div
+                className="w-12 h-12 rounded-full flex items-center justify-center mb-4 transition-transform duration-300 group-hover:scale-110"
+                style={{ backgroundColor: "var(--surface-active)" }}
+              >
                 {action.icon}
               </div>
-              <h3 className="text-sm font-semibold text-white mb-1">{action.name}</h3>
-              <p className="text-xs text-white/40">{action.desc}</p>
+              <h3 className="text-sm font-semibold mb-1" style={{ color: "var(--text-primary)" }}>{action.name}</h3>
+              <p className="text-xs" style={{ color: "var(--text-muted)" }}>{action.desc}</p>
             </CardContent>
           </Card>
         </Link>
