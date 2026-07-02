@@ -1,14 +1,15 @@
 import * as dotenv from "dotenv";
 import * as path from "path";
 dotenv.config({ path: path.resolve(__dirname, "../.env") });
-import { prisma } from "./index.js";
 
 async function main() {
   console.log("Seeding database...");
+  const { prisma } = await import("./index.js");
 
   // 1. Clear existing data
   console.log("Clearing existing data...");
   await prisma.transaction.deleteMany();
+  await prisma.notification.deleteMany();
   await prisma.bankAccount.deleteMany();
   await prisma.mockBankLedger.deleteMany();
   await prisma.user.deleteMany();
@@ -120,5 +121,6 @@ main()
     process.exit(1);
   })
   .finally(async () => {
+    const { prisma } = await import("./index.js");
     await prisma.$disconnect();
   });

@@ -1,6 +1,7 @@
 import { prisma } from "@repo/db";
 import "dotenv/config";
 import crypto from "crypto";
+import express from "express";
 
 const POLL_INTERVAL = parseInt(process.env.POLL_INTERVAL_MS || "5000", 10);
 const MOCK_BANK_URL = process.env.MOCK_BANK_URL || "http://localhost:3001";
@@ -274,8 +275,8 @@ async function reconcileOrphanedDeposits() {
   }
 }
 
-function startSweeper() {
-  console.log(`🚀 Sweeper started, polling every ${POLL_INTERVAL}ms`);
+function startSweeperLoop() {
+  console.log(`🚀 Sweeper loop started, polling every ${POLL_INTERVAL}ms`);
 
   // Continuous polling loop
   setInterval(async () => {
@@ -285,4 +286,18 @@ function startSweeper() {
   }, POLL_INTERVAL);
 }
 
-startSweeper();
+// Dummy Server + Keep-Alive Ping Hack
+const app = express();
+const PORT = process.env.PORT || 3003;
+
+// A dummy endpoint just to prove the server is awake
+app.get("/health", (req, res) => {
+  res.status(200).send("Sweeper is awake and polling!");
+});
+
+app.listen(PORT, () => {
+  console.log(`Sweeper disguised as web service on port ${PORT}`);
+  
+  // Start your setInterval polling loop here!
+  startSweeperLoop(); 
+});
