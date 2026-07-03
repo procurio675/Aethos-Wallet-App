@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 
 export default function Navbar() {
@@ -23,11 +24,12 @@ export default function Navbar() {
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3 group">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src="/aethos-logo.png"
-            alt="Aethos"
-            style={{ width: 56, height: 56, objectFit: "contain" }}
+            alt="Aethos Logo"
+            width={56}
+            height={56}
+            className="object-contain"
           />
           <span className="text-xl font-bold tracking-tight text-white">Aethos</span>
         </Link>
