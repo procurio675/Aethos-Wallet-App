@@ -4,7 +4,6 @@ import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -55,13 +54,7 @@ export default function SignInPage() {
       <Card className="w-full max-w-md bg-[#0a0a16]/80 border-white/[0.05] backdrop-blur-xl z-10 animate-fade-in-slow">
         <CardHeader className="space-y-2 text-center pb-6">
           <div className="mx-auto flex items-center justify-center mb-4">
-            <Image
-              src="/aethos-logo.png"
-              alt="Aethos Logo"
-              width={64}
-              height={64}
-              className="object-contain"
-            />
+            <span className="text-3xl font-bold tracking-tight bg-gradient-to-r from-violet-400 to-indigo-400 bg-clip-text text-transparent">Aethos</span>
           </div>
           <CardTitle className="text-2xl font-semibold tracking-tight text-white">Sign in to PayFlow</CardTitle>
           <CardDescription className="text-white/60">

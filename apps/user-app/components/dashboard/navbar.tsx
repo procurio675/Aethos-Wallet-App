@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { LogOut, Bell, CheckCircle2, ChevronDown, Lock, Check, X, Eye, EyeOff } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { markNotificationsAsRead } from "@/app/actions/notifications";
@@ -114,15 +113,8 @@ export default function DashboardNavbar({
       >
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           {/* Logo */}
-          <Link href="/dashboard" className="flex items-center gap-3 group">
-            <Image
-              src="/aethos-logo.png"
-              alt="Aethos Logo"
-              width={56}
-              height={56}
-              className="object-contain"
-            />
-            <span className="text-xl font-bold tracking-tight" style={{ color: "var(--text-primary)" }}>Aethos</span>
+          <Link href="/dashboard" className="flex items-center group">
+            <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-violet-400 to-indigo-400 bg-clip-text text-transparent group-hover:from-violet-300 group-hover:to-indigo-300 transition-all duration-200">Aethos</span>
           </Link>
 
           {/* Right side */}

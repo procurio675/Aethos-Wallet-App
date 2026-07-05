@@ -1,159 +1,106 @@
-# Turborepo starter
+# Aethos | Digital Wallet Application
 
-This Turborepo starter is maintained by the Turborepo core team.
+**Aethos** is a high-performance, highly concurrent digital wallet application built to demonstrate financial engineering. It utilizes a distributed microservices architecture within a Turborepo monorepo, focusing on ACID-compliant transactions, database deadlock prevention, and cryptographic webhook security.
 
-## Using this example
+**Live Demo:** https://aethos-wallet-app-user-app-delta.vercel.app/
 
-Run the following command:
+---
 
-```sh
-npx create-turbo@latest
+## 🛡️ Core Engineering & Security Highlights
+
+This project was made to solve the four major vulnerabilities found in standard CRUD financial applications, making it robust enough to handle real-world concurrent transaction scenarios.
+
+### 1. Database Deadlock Prevention (P2P Transfers)
+In a highly concurrent system, simultaneous cross-transfers (User A sends to B, while User B sends to A) can crash a PostgreSQL database via a Thread Deadlock. Aethos prevents this by utilizing **Lexicographical Lock Ordering**. The system mathematically sorts the UUIDs of the sender and receiver, ensuring the database always locks the lower-value ID first. This forces competing threads into a clean waiting queue instead of a cyclic dependency.
+
+### 2. Double-Spend & Lost Update Neutralization
+To prevent users from exploiting race conditions by double-clicking or firing parallel API requests, all monetary movements are secured using **Pessimistic Row Locking** (`SELECT ... FOR UPDATE`).
+*   **Withdrawals (Push):** Employs an "Instant Hold" pattern, locking and deducting the wallet balance *before* dispatching the network request to the bank, preventing double-spend exploits.
+*   **Deposits (Pull):** Applies locks to the receiver's row to prevent the "Lost Update Anomaly" during concurrent inbound transfers.
+
+### 3. Cryptographic Webhook Integrity (HMAC SHA-256)
+To prevent malicious actors from using API testing tools to hit the webhook endpoint and artificially inflate their wallet balances, the `mock-bank` and `webhook-handler` establish Server-to-Server trust. Every webhook payload is signed using an **HMAC SHA-256** hash of the raw JSON body and a shared `.env` secret. The handler recalculates and verifies this signature before processing the ledger.
+
+### 4. Idempotency & Network Failure Recovery
+If a network connection drops while the bank is processing a transaction, standard systems might lose the transaction state. Aethos utilizes Prisma-generated **CUIDs as Idempotency Keys**. 
+*   If a bank webhook fails to arrive, the continuous `sweeper` daemon detects the stale `PENDING` state, attaches the original Idempotency Key, and queries the bank for the definitive status, safely executing a rollback or settlement without ever double-charging the user.
+
+---
+
+## 🏗 System Architecture
+
+The project is structured as a full-stack monorepo separating the user-facing interfaces from the secure backend background workers.
+
+*   **`user-app` (Next.js):** The primary frontend dashboard and synchronous API routes for the wallet.
+*   **`mock-bank` (Next.js):** An isolated payment gateway simulating an external core banking system with built-in network failure simulation (Chaos Monkey).
+*   **`webhook-handler` (Express/Node):** A dedicated, standalone server handling incoming bank settlement webhooks.
+*   **`sweeper` (Node Daemon):** A continuous background polling worker that resolves network drops, orphaned transactions, and asynchronous push payouts.
+*   **`db` (Prisma/PostgreSQL):** The shared source of truth, enforcing strict relational integrity across all microservices.
+
+---
+
+## 💻 Tech Stack
+
+*   **Frameworks:** Next.js (App Router), Express.js, Node.js
+*   **Language:** TypeScript
+*   **Database:** PostgreSQL (Hosted on Neon Serverless)
+*   **ORM:** Prisma
+*   **Architecture:** Turborepo (Monorepo)
+*   **Authentication:** NextAuth.js
+*   **Deployment:** Vercel (Frontends) & Render (Background Workers)
+
+---
+
+## Local Development Setup
+
+To run this distributed system locally, you will need to start multiple services simultaneously.
+
+### Prerequisites
+- Node.js (v18+)
+- PostgreSQL (Local or remote)
+
+### 1. Clone the repository
+```bash
+git clone https://github.com/your-username/aethos.git
+cd aethos
 ```
 
-## What's inside?
-
-This Turborepo includes the following packages/apps:
-
-### Apps and Packages
-
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
-
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
-
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo build
+### 2. Install dependencies
+```bash
+npm install
 ```
 
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo build
-npm dlx turbo build
-npm exec turbo build
+### 3. Environment Variables
+Create a `.env` file in the root directory (or in the respective packages) based on `.env.example`:
+```env
+DATABASE_URL="postgresql://user:password@localhost:5432/aethos"
+NEXTAUTH_SECRET="your-super-secret-key"
+WEBHOOK_SECRET="your-hmac-secret-key"
 ```
 
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo build --filter=docs
+### 4. Database Setup
+Initialize the Prisma client and run migrations:
+```bash
+cd packages/db
+npx prisma migrate dev
 ```
 
-Without global `turbo`:
-
-```sh
-npx turbo build --filter=docs
-npm exec turbo build --filter=docs
-npm exec turbo build --filter=docs
+### 5. Start all services
+From the root directory, start the development server:
+```bash
+npm run dev
 ```
+*(This command leverages concurrently/turbo to boot the user-app, mock-bank, webhook-handler, and sweeper simultaneously).*
 
-### Develop
+---
 
-To develop all apps and packages, run the following command:
+## Why I Built This
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
+I built Aethos as my flagship portfolio project to move beyond standard CRUD applications and tackle the real-world challenges of distributed systems. It served as a deep dive into:
+- Concurrency and Race Conditions in databases.
+- The importance of ACID properties when handling financial ledgers.
+- System design patterns for resilience (Idempotency, Polling daemons).
+- Managing complex monorepo structures using Turborepo.
 
-```sh
-cd my-turborepo
-turbo dev
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo dev
-npm exec turbo dev
-npm exec turbo dev
-```
-
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo dev --filter=web
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo dev --filter=web
-npm exec turbo dev --filter=web
-npm exec turbo dev --filter=web
-```
-
-### Remote Caching
-
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo login
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo login
-npm exec turbo login
-npm exec turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo link
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo link
-npm exec turbo link
-npm exec turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+---
+*Developed by **Krutant Jethva***

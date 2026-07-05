@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 
 export default function Navbar() {
@@ -23,15 +22,8 @@ export default function Navbar() {
     >
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-3 group">
-          <Image
-            src="/aethos-logo.png"
-            alt="Aethos Logo"
-            width={56}
-            height={56}
-            className="object-contain"
-          />
-          <span className="text-xl font-bold tracking-tight text-white">Aethos</span>
+        <Link href="/" className="flex items-center group">
+          <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-violet-400 to-indigo-400 bg-clip-text text-transparent group-hover:from-violet-300 group-hover:to-indigo-300 transition-all duration-200">Aethos</span>
         </Link>
 
         {/* Nav links */}
