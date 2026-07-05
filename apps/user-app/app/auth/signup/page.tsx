@@ -40,7 +40,7 @@ export default function SignUpPage() {
 
       <Link href="/" className="absolute top-8 left-8 flex items-center gap-2 text-white/80 hover:text-white transition-colors z-10">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="m15 18-6-6 6-6"/>
+          <path d="m15 18-6-6 6-6" />
         </svg>
         Back to Home
       </Link>
@@ -62,7 +62,7 @@ export default function SignUpPage() {
                 {error}
               </div>
             )}
-            
+
             <div className="space-y-2">
               <Label htmlFor="name" className="text-white/80">Full Name</Label>
               <Input
@@ -98,7 +98,7 @@ export default function SignUpPage() {
                 className="bg-white/[0.03] border-white/[0.1] text-white placeholder:text-white/30 focus-visible:ring-violet-500"
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="password" className="text-white/80">Password</Label>
               <Input

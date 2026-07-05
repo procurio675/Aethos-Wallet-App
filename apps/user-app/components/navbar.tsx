@@ -26,18 +26,6 @@ export default function Navbar() {
           <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-violet-400 to-indigo-400 bg-clip-text text-transparent group-hover:from-violet-300 group-hover:to-indigo-300 transition-all duration-200">Aethos</span>
         </Link>
 
-        {/* Nav links */}
-        <nav className="hidden md:flex items-center gap-8">
-          {["Features", "Security", "Pricing"].map((item) => (
-            <Link
-              key={item}
-              href={`#${item.toLowerCase()}`}
-              className="text-sm text-white/50 hover:text-white transition-colors duration-200"
-            >
-              {item}
-            </Link>
-          ))}
-        </nav>
 
         {/* CTA */}
         <div className="flex items-center gap-3">

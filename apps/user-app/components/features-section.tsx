@@ -91,13 +91,13 @@ const features = [
 
 export default function FeaturesSection() {
   return (
-    <section id="features" className="relative py-32 px-6">
+    <section id="features" className="relative py-12 px-6">
       {/* subtle background glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] bg-violet-600/5 blur-[100px] rounded-full pointer-events-none" />
 
       <div className="max-w-6xl mx-auto relative">
         {/* Section header */}
-        <div className="text-center mb-16">
+        <div className="text-center mb-10">
           <div className="inline-block text-xs font-semibold uppercase tracking-widest text-violet-400/70 mb-4">
             Everything you need
           </div>

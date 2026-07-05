@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Building2, Plus, Loader2, Star } from "lucide-react";
+import { Building2, Loader2, Star } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -143,13 +143,6 @@ export default function AddMoneyForm({ accounts }: { accounts: BankAccountProps[
                   Please link a bank account before adding money.
                 </div>
               )}
-
-              <button type="button" disabled={isLoading} className="flex items-center gap-3 p-4 rounded-xl border border-dashed border-white/10 text-white/50 hover:text-white hover:border-white/20 hover:bg-white/[0.02] transition-all disabled:opacity-50">
-                <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center shrink-0">
-                  <Plus className="w-5 h-5" />
-                </div>
-                <span className="text-sm font-medium">Link new bank account</span>
-              </button>
             </div>
           </div>
 

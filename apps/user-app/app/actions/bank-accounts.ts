@@ -40,16 +40,30 @@ export async function addBankAccount(bankName: string, accountNo: string, ifsc: 
   const last4 = accountNo.slice(-4);
   const isFirst = count === 0; // First account becomes primary
 
-  await prisma.bankAccount.create({
-    data: {
-      userId,
-      bankName: bankName.trim(),
-      accountNo,
-      last4,
-      ifsc: ifsc.trim() || null,
-      isPrimary: isFirst,
-    },
-  });
+  // Create BankAccount + MockBankLedger in a single transaction
+  // The MockBankLedger entry is needed so the mock bank's /api/authorize
+  // can find and debit this account during deposit flows.
+  await prisma.$transaction([
+    prisma.bankAccount.create({
+      data: {
+        userId,
+        bankName: bankName.trim(),
+        accountNo,
+        last4,
+        ifsc: ifsc.trim() || null,
+        isPrimary: isFirst,
+      },
+    }),
+    prisma.mockBankLedger.upsert({
+      where: { accountNumber: accountNo },
+      update: {},
+      create: {
+        accountNumber: accountNo,
+        pinHash: "1234-hash",
+        bankBalance: 5000000, // ₹50,000 in paise
+      },
+    }),
+  ]);
 
   return { success: true };
 }

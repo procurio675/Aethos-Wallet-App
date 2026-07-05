@@ -1,38 +1,10 @@
 "use client";
 
-import { useEffect, useRef } from "react";
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-
-// Animated number counter
-function AnimatedCounter({ end, suffix = "" }: { end: number; suffix?: string }) {
-  const ref = useRef<HTMLSpanElement>(null);
-
-  useEffect(() => {
-    let start = 0;
-    const duration = 2000;
-    const step = 16;
-    const increment = end / (duration / step);
-    const timer = setInterval(() => {
-      start += increment;
-      if (start >= end) {
-        start = end;
-        clearInterval(timer);
-      }
-      if (ref.current) {
-        ref.current.textContent = Math.floor(start).toLocaleString("en-IN") + suffix;
-      }
-    }, step);
-    return () => clearInterval(timer);
-  }, [end, suffix]);
-
-  return <span ref={ref}>0{suffix}</span>;
-}
 
 export default function HeroSection() {
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+    <section className="relative flex items-center justify-center overflow-hidden py-4">
       {/* Radial glow background */}
       <div className="absolute inset-0 -z-10">
         <div className="absolute inset-0 bg-[#080810]" />
@@ -55,7 +27,7 @@ export default function HeroSection() {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,#080810_100%)]" />
       </div>
 
-      <div className="relative z-10 max-w-4xl mx-auto px-6 text-center pt-24 pb-20">
+      <div className="relative z-10 max-w-4xl mx-auto px-6 text-center pt-28 pb-16">
         {/* Badge */}
         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-violet-500/20 bg-violet-500/5 text-violet-300 text-xs font-medium mb-8 animate-fade-in">
           <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
@@ -78,7 +50,7 @@ export default function HeroSection() {
         </p>
 
         {/* CTA buttons */}
-        <div className="flex flex-col sm:flex-row gap-3 justify-center items-center mb-16 animate-slide-up-delay-2">
+        <div className="flex flex-col sm:flex-row gap-3 justify-center items-center animate-slide-up-delay-2">
           <Link href="/auth/signup">
             <button
               id="hero-signup-btn"
@@ -104,30 +76,6 @@ export default function HeroSection() {
           </Link>
         </div>
 
-        {/* Stats */}
-        <div className="flex flex-col sm:flex-row gap-8 justify-center items-center border-t border-white/[0.06] pt-10 animate-fade-in-slow">
-          {[
-            { value: 12000, suffix: "+", label: "Active users" },
-            { value: 50000000, suffix: "₹", label: "Transferred daily", prefix: true },
-            { value: 99.9, suffix: "%", label: "Uptime SLA" },
-          ].map(({ value, suffix, label, prefix }) => (
-            <div key={label} className="text-center">
-              <div className="text-2xl font-bold text-white tabular-nums">
-                {prefix && <span className="text-violet-400">₹</span>}
-                <AnimatedCounter end={value} suffix={prefix ? "" : suffix} />
-              </div>
-              <div className="text-sm text-white/35 mt-0.5">{label}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Decorative floating card mockup */}
-      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-[560px] h-[300px] pointer-events-none select-none hidden lg:block">
-        <div className="relative w-full h-full">
-          {/* Card glow */}
-          <div className="absolute inset-0 bg-gradient-to-t from-violet-600/20 to-transparent blur-3xl rounded-full" />
-        </div>
       </div>
     </section>
   );

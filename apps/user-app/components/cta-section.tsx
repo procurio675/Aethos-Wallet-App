@@ -22,9 +22,9 @@ const steps = [
 
 export default function CtaSection() {
   return (
-    <section id="security" className="relative py-32 px-6">
+    <section id="security" className="relative py-12 px-6">
       {/* How it works */}
-      <div className="max-w-5xl mx-auto mb-32">
+      <div className="max-w-5xl mx-auto mb-12">
         <div className="text-center mb-14">
           <div className="inline-block text-xs font-semibold uppercase tracking-widest text-violet-400/70 mb-4">
             How it works
@@ -69,7 +69,7 @@ export default function CtaSection() {
               </span>
             </h2>
             <p className="text-white/40 text-base mb-10 max-w-md mx-auto leading-relaxed">
-              Join thousands of users who trust Aethos for their everyday payments.
+              A secure, production-grade wallet built with deadlock prevention and cryptographic security at its core.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link href="/auth/signup">
